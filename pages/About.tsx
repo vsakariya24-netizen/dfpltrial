@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Target, Eye, Heart, TrendingUp, Award, MapPin, Users, Calendar, ArrowUpRight, CheckCircle2, Factory, Crown, Star, Sparkles, MoveRight } from 'lucide-react';
-
+import { Helmet } from 'react-helmet-async'; // 👈 Add this
 // --- Helper Components for Animation ---
 
 const RevealSection: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => {
@@ -59,7 +59,61 @@ const About: React.FC = () => {
 
   return (
     <div className="bg-[#fcfcfc] min-h-screen overflow-x-hidden font-sans text-gray-900">
-      
+      <Helmet>
+        {/* 1. Story & Trust-Building Title */}
+        <title>About Durable Fastener | 15+ Years of Manufacturing Excellence in Rajkot</title>
+        
+        <meta 
+          name="description" 
+          content="Founded in 2018, Durable Fastener Pvt Ltd has grown from a small workshop to a massive 7000 sq. ft. manufacturing hub in Rajkot. ISO 9001:2015 Certified." 
+        />
+        
+        <meta 
+          name="keywords" 
+          content="durable fastener history, about durable fastener pvt ltd, screw manufacturer rajkot, fastener factory india, industrial hardware company profile" 
+        />
+
+        {/* 2. ABOUT PAGE SCHEMA (Entity Identity) */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "AboutPage",
+              "mainEntity": {
+                "@type": "Organization",
+                "name": "Durable Fastener Pvt Ltd",
+                "alternateName": "Durable Enterprise",
+                "foundingDate": "2018",
+                "description": "Leading manufacturer of high-tensile industrial fasteners and architectural hardware.",
+                "logo": "https://durablefastener.com/durablefastener.png",
+                "founder": {
+                  "@type": "Person",
+                  "name": "Khushi Chovatiya"
+                },
+                "location": {
+                  "@type": "Place",
+                  "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": "Rajkot",
+                    "addressRegion": "Gujarat",
+                    "addressCountry": "IN"
+                  }
+                },
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": "+91 87587 00709",
+                  "contactType": "sales",
+                  "areaServed": "IN"
+                },
+                "sameAs": [
+                  "https://www.facebook.com/durablefastener",
+                  "https://www.linkedin.com/company/durablefastener"
+                ]
+              }
+            }
+          `}
+        </script>
+      </Helmet>
       {/* 1. POWER HERO SECTION */}
       <div className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-[#0a0f1a] text-white">
         <div 
@@ -222,7 +276,9 @@ const About: React.FC = () => {
               <div key={i} className="text-center p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
                 <item.icon className="mx-auto text-amber-500 mb-6 group-hover:scale-110 transition-transform" size={40} />
                 <h4 className="text-white font-black mb-3">{item.title}</h4>
-                <p className="text-slate-400 text-sm font-light leading-relaxed">{item.text}</p>
+                <p className="text-slate-400 text-lg font-light leading-relaxed max-w-sm">
+  Decades of expertise inside our <b>fastener manufacturing factory</b> producing international grade hardware.
+</p>
               </div>
             ))}
           </div>

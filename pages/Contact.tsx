@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { motion } from 'framer-motion'; // npm install framer-motion
+import { motion } from 'framer-motion';
 import { 
   Mail, Phone, MapPin, Send, Loader2, 
   Globe, Clock, Briefcase, Building2 
 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -45,11 +46,6 @@ const Contact: React.FC = () => {
   };
 
   // --- Animation Variants ---
-  const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-  };
-
   const staggerContainer = {
     hidden: { opacity: 0 },
     visible: {
@@ -69,6 +65,76 @@ const Contact: React.FC = () => {
   return (
     <div className="bg-gray-50 min-h-screen font-sans">
       
+      {/* 👇 SEO, GEO & AEO OPTIMIZED HELMET 👇 */}
+      <Helmet>
+        {/* 1. Title optimized for high-intent searches */}
+        <title>Contact Durable Fastener | Top Screw Manufacturer in Rajkot & Gujarat</title>
+        
+        {/* 2. Description with natural keyword placement for Voice Search (AEO) */}
+        <meta 
+          name="description" 
+          content="Contact Durable Fastener Private Limited, a leading fastener factory and MS screw manufacturer in Rajkot. We are top high tensile fasteners manufacturers in Gujarat supplying across India. Call +91 87587 00709." 
+        />
+        
+        {/* 3. TARGET KEYWORDS (Exact Match from your list) */}
+        <meta 
+          name="keywords" 
+          content="durable fastener private limited, durable fastener, durable fastener private limited photos, durable enterprise, ms screw manufacturer in rajkot, fasteners manufacturers in rajkot, high tensile fasteners gujarat, durable fasteners, top screw manufacturers in gujarat, fastener manufacturer in rajkot, durable fasteners ltd, fastener factory, screw manufacturer in rajkot, fasteners manufacturers in gujarat, fastener manufacturing factory, fasteners manufacturers in india" 
+        />
+
+        {/* 4. LOCAL BUSINESS SCHEMA (GEO SEO) */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "ContactPage",
+              "mainEntity": {
+                "@type": "LocalBusiness",
+                "name": "Durable Fastener Private Limited",
+                "alternateName": ["Durable Enterprise", "Durable Fasteners Ltd"],
+                "image": "https://durablefastener.com/durablefastener.png",
+                "telephone": "+918758700709",
+                "email": "durablefastener@outlook.com",
+                "url": "https://durablefastener.com/contact",
+                "description": "Durable Fastener Private Limited is a premier fastener manufacturing factory in Rajkot. We are recognized as top screw manufacturers in Gujarat, producing high tensile fasteners and MS screws for industrial clients across India.",
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": "Plot No.16, Survey No.660, Surbhi Ind Zone-D, Ravki",
+                  "addressLocality": "Rajkot",
+                  "addressRegion": "Gujarat",
+                  "postalCode": "360004",
+                  "addressCountry": "IN"
+                },
+                "geo": {
+                  "@type": "GeoCoordinates",
+                  "latitude": 22.2587,
+                  "longitude": 70.7993
+                },
+                "areaServed": {
+                  "@type": "Country",
+                  "name": "India"
+                },
+                "openingHoursSpecification": {
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday"
+                  ],
+                  "opens": "09:00",
+                  "closes": "19:00"
+                },
+                "hasMap": "https://goo.gl/maps/YOUR_GOOGLE_MAPS_LINK_HERE" 
+              }
+            }
+          `}
+        </script>
+      </Helmet>
+      {/* 👆 END HELMET 👆 */}
+
       {/* --- Section 1: Immersive Hero Header --- */}
       <div className="relative bg-slate-900 text-white pb-32 pt-20 lg:pt-32 overflow-hidden">
         {/* Background Decorative Elements */}
@@ -157,16 +223,43 @@ const Contact: React.FC = () => {
                     icon={<MapPin size={22} />} 
                     colorClass="bg-blue-500/10 text-blue-400 group-hover:bg-blue-500"
                     title="Factory & HQ"
-                    content={<>Plot No.16, Survey No.660, <br/>Surbhi Ind Zone-D, Rajkot-360004,<br/>Gujarat, India</>}
+                    content={<>Plot No.16, Survey No.660, <br/>Surbhi Ind Zone-D, Ravki, Rajkot-360004,<br/>Gujarat, India</>}
                 />
                 
                 <InfoItem 
-                    icon={<Phone size={22} />} 
-                    colorClass="bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500"
-                    title="Call Us"
-                    content="+91 87587 00704/+91 87587 00709"
-                    subContent="Mon-Sat, 9am - 7pm"
-                />
+    icon={<Phone size={22} />} 
+    colorClass="bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500"
+    title="Call Us"
+    content={
+        <div className="flex flex-col gap-1">
+            <a href="tel:+918758700704" className="hover:text-emerald-400 transition-colors">+91 87587 00704</a>
+            <a href="tel:+918758700709" className="hover:text-emerald-400 transition-colors">+91 87587 00709</a>
+        </div>
+    }
+    subContent="Mon-Sat, 9am - 7pm"
+/>
+
+{/* NEW: WhatsApp Integration */}
+<InfoItem 
+    icon={
+        <svg size={22} viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.438h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+    } 
+    colorClass="bg-[#25D366]/10 text-[#25D366] group-hover:bg-[#25D366]"
+    title="WhatsApp"
+    content={
+        <a 
+            href="https://wa.me/918758700709?text=Hello%20Durable%20Fastener,%20I%20have%20an%20inquiry." 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="font-bold text-lg hover:underline"
+        >
+            Chat with Sales
+        </a>
+    }
+    subContent="Instant support via WhatsApp"
+/>
 
                 <InfoItem 
                     icon={<Mail size={22} />} 
@@ -211,14 +304,14 @@ const Contact: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className="h-full flex flex-col items-center justify-center text-center p-8"
               >
-                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                     <Send size={32} className="text-green-600 ml-1" />
-                 </div>
-                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Message Sent Successfully!</h3>
-                 <p className="text-slate-500 mb-8">Thank you for contacting Durable Fasteners. Our sales team will review your inquiry and get back to you within 24 hours.</p>
-                 <button onClick={() => setSubmitted(false)} className="text-blue-600 font-semibold hover:text-blue-800 flex items-center gap-2">
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Message Sent Successfully!</h3>
+                  <p className="text-slate-500 mb-8">Thank you for contacting Durable Fasteners. Our sales team will review your inquiry and get back to you within 24 hours.</p>
+                  <button onClick={() => setSubmitted(false)} className="text-blue-600 font-semibold hover:text-blue-800 flex items-center gap-2">
                     Send another message <Briefcase size={16} />
-                 </button>
+                  </button>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -295,7 +388,7 @@ const Contact: React.FC = () => {
             width="100%" 
             height="100%" 
             id="gmap_canvas" 
-            src="https://maps.google.com/maps?q=Durable%20Fastener%20Pvt.%20Ltd.%20Rajkot&t=&z=14&ie=UTF8&iwloc=&output=embed" 
+            src="https://maps.google.com/maps?q=Durable%20Fastener%20Pvt%20Ltd%20Rajkot&t=&z=13&ie=UTF8&iwloc=&output=embed" 
             frameBorder="0" 
             scrolling="no" 
             title="Durable Fastener Location"
