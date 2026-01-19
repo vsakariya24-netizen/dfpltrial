@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import {
   ArrowLeft, Save, Loader2, Trash2, Upload,
   X, Check, Ruler, Image as ImageIcon,
   LayoutGrid, Settings, Hammer, Plus, Info,
-  Search, ListPlus, Activity
+  Search, ListPlus, Activity, ShieldCheck,
+  Palette, Box, Tag
 } from 'lucide-react';
 
 // --- TYPES ---
@@ -17,37 +18,31 @@ type CategoryStructure = {
 
 type SpecItem = { key: string; value: string };
 
-type DimItem = { 
-  label: string; 
-  symbol: string; 
-  values: Record<string, string>; 
+type DimItem = {
+  label: string;
+  symbol: string;
+  values: Record<string, string>;
 };
 
+type CertItem = { title: string; subtitle: string };
 type MaterialRow = { name: string; grades: string };
 type AppItem = { name: string; image: string; loading?: boolean };
 
-// --- SUGGESTIONS ---
+// --- SUGGESTIONS & CONSTANTS ---
 const HEAD_TYPES = ["Bugle Head", "Countersunk (CSK)", "Pan Head", "Wafer Head"];
 const DRIVE_TYPES = ["Phillips No.2", "Pozi (PZ)", "Torx (Star)", "Slotted"];
 const THREAD_TYPES = ["Fine Thread", "Coarse Thread", "Twinfast", "Hi-Lo"];
-const MATERIALS = ["C1022 Hardened Carbon Steel", "Stainless Steel 304", "Mild Steel"];
+const MATERIALS = ["C1022 Hardened Carbon Steel", "Stainless Steel 304", "Mild Steel", "Zinc Alloy", "Aluminium", "Brass"];
 
-// --- CONSTANTS ---
 const KNOWN_CORE_KEYS = [
-    "Head Type", "Drive Type", "Thread Type", 
-    "Point Type", "Coating", "Plating", "Surface Finish", "Shank Type", "Washer Type",
-    "Material", "Grade", "Standard"
+  "Head Type", "Drive Type", "Thread Type",
+  "Point Type", "Coating", "Plating", "Surface Finish", "Shank Type", "Washer Type",
+  "Material", "Grade", "Standard"
 ];
 
-// Default Performance keys (Initial List)
 const DEFAULT_PERFORMANCE_KEYS = [
-  "Core Hardness",
-  "Surface Hardness",
-  "Tensile Strength",
-  "Shear Strength",
-  "Salt Spray Resistance",
-  "Installation Speed",
-  "Temperature Range"
+  "Core Hardness", "Surface Hardness", "Tensile Strength",
+  "Shear Strength", "Salt Spray Resistance", "Installation Speed", "Temperature Range"
 ];
 
 const AddProduct: React.FC = () => {
@@ -58,49 +53,65 @@ const AddProduct: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState<CategoryStructure[]>([]);
-   
+
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([{ name: '', grades: '' }]);
 
-  // EXPERT FIELDS STATE
-  const [expertData, setExpertData] = useState({
-      seo_keywords: ''
+  // --- EXPERT / FITTING DATA ---
+  const [expertData, setExpertData] = useState({ seo_keywords: '' });
+  
+  // Specific Data for Fittings (from Code 1)
+  const [fittingExtras, setFittingExtras] = useState({
+    colors: '',       // "Available Colors"
+    general_names: '', // "General Names"
+    packing: ''        // "Standard Packing"
   });
 
   // Main Form Data
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
-    category: '', 
+    category: '',
     sub_category: '',
-    material: '',        
-    material_grade: '', 
+    material: '',
+    material_grade: '',
     short_description: '',
     long_description: '',
     images: [] as string[],
-    technical_drawing: '', 
-    specifications: [] as SpecItem[], 
+    technical_drawing: '',
+    specifications: [] as SpecItem[],
     dimensional_specifications: [] as DimItem[],
-    applications: [] as AppItem[] 
+    applications: [] as AppItem[],
+    certifications: [] as CertItem[]
   });
 
-  // --- DYNAMIC CORE SPECS STATE ---
+  // --- DYNAMIC CORE SPECS STATE (Fasteners) ---
   const [dynamicCoreSpecs, setDynamicCoreSpecs] = useState<SpecItem[]>([
     { key: 'Head Type', value: '' },
     { key: 'Drive Type', value: '' },
     { key: 'Thread Type', value: '' }
   ]);
 
-  // --- DYNAMIC PERFORMANCE STATE ---
-  // 1. List of all available buttons (starts with defaults)
+  // --- DYNAMIC PERFORMANCE STATE (Fasteners) ---
   const [availablePerfKeys, setAvailablePerfKeys] = useState<string[]>(DEFAULT_PERFORMANCE_KEYS);
-  // 2. List of which ones are CHECKED
   const [selectedPerformance, setSelectedPerformance] = useState<string[]>([]);
-  // 3. UI State for adding new one
   const [isAddingPerf, setIsAddingPerf] = useState(false);
   const [newPerfName, setNewPerfName] = useState('');
 
+  // --- VARIANTS ---
   const [sizes, setSizes] = useState<Array<{ diameter: string, length: string }>>([{ diameter: '', length: '' }]);
   const [finishes, setFinishes] = useState<Array<{ name: string, image: string, loading: boolean }>>([{ name: '', image: '', loading: false }]);
+
+  // --- LOGIC: DETECT CATEGORY TYPE ---
+  // This toggles between "Fastener Layout" and "Fitting Layout"
+  const isFittingCategory = useMemo(() => {
+    const cat = formData.category?.toLowerCase() || '';
+    const sub = formData.sub_category?.toLowerCase() || '';
+    return (
+        cat.includes('fitting') || cat.includes('channel') || cat.includes('hinge') || 
+        cat.includes('handle') || cat.includes('lock') || cat.includes('hardware') ||
+        sub.includes('fitting') || sub.includes('channel')
+    );
+  }, [formData.category, formData.sub_category]);
 
   // --- 1. INITIAL FETCH ---
   useEffect(() => {
@@ -108,16 +119,16 @@ const AddProduct: React.FC = () => {
       const { data: cats } = await supabase.from('categories').select('*');
       const { data: subs } = await supabase.from('sub_categories').select('*');
       if (cats && subs) {
-         setCategories(cats.map(cat => ({
-           id: cat.id, name: cat.name,
-           sub_categories: subs.filter(sub => sub.category_id === cat.id)
-         })));
+        setCategories(cats.map(cat => ({
+          id: cat.id, name: cat.name,
+          sub_categories: subs.filter(sub => sub.category_id === cat.id)
+        })));
       }
     };
     fetchCategories();
   }, []);
 
-  // --- 2. FETCH PRODUCT (FIXED: ROBUST CHECK FOR CUSTOM PERFORMANCE) ---
+  // --- 2. FETCH PRODUCT ---
   useEffect(() => {
     if (isEditMode) {
       const fetchProduct = async () => {
@@ -139,8 +150,8 @@ const AddProduct: React.FC = () => {
           if (product.material) {
              const smartSplitRegex = /\s*\|\s*(?![^()]*\))/g;
              let rawParts = (product.material.match(smartSplitRegex) || product.material.includes('|')) 
-                ? product.material.split(smartSplitRegex).map((s: string) => s.trim())
-                : product.material.split(',').map((s: string) => s.trim());
+               ? product.material.split(smartSplitRegex).map((s: string) => s.trim())
+               : product.material.split(',').map((s: string) => s.trim());
              parsedRows = rawParts.map((part: string) => {
                 const match = part.match(/^(.*?)\s*\(Grade\s*([^)]*)\)$/i);
                 return match ? { name: match[1].trim(), grades: match[2].trim() } : { name: part.replace(/\(Grade.*?\)/, '').trim(), grades: '' };
@@ -148,21 +159,24 @@ const AddProduct: React.FC = () => {
           }
           setMaterialRows(parsedRows.length > 0 ? parsedRows : [{ name: '', grades: '' }]);
 
-          // Extract Specs & Expert Data
           const specs = Array.isArray(product.specifications) ? product.specifications : [];
-          
           const getVal = (k:string) => specs.find((s:any) => s.key === k)?.value || '';
+          
           setExpertData({ seo_keywords: getVal('seo_keywords') });
+          
+          // Populate Fitting Extras
+          setFittingExtras({
+            colors: specs.find((s:any) => s.key === 'Available Colors')?.value || '',
+            general_names: specs.find((s:any) => s.key === 'General Names')?.value || '',
+            packing: specs.find((s:any) => s.key === 'Standard Packing')?.value || ''
+          });
 
-          // --- SPLIT LOGIC ---
+          // --- SPLIT LOGIC (Core vs Performance vs Other) ---
           const loadedCoreSpecs: SpecItem[] = [];
           const loadedOtherSpecs: SpecItem[] = [];
           const loadedPerfKeys: string[] = [];
-          
-          // Start with defaults in the Set
           const dynamicAvailableKeys = new Set(DEFAULT_PERFORMANCE_KEYS);
 
-          // Populate Defaults
           if (product.head_type) loadedCoreSpecs.push({ key: 'Head Type', value: product.head_type });
           if (product.drive_type) loadedCoreSpecs.push({ key: 'Drive Type', value: product.drive_type });
           if (product.thread_type) loadedCoreSpecs.push({ key: 'Thread Type', value: product.thread_type });
@@ -172,21 +186,15 @@ const AddProduct: React.FC = () => {
               const lowerKey = key.toLowerCase();
               const val = s.value || ''; 
 
-              // Skip internals
-              if (['seo_keywords', 'hardness','sst','torque','salt','standard','box_qty','carton_qty','tds_url','mtc_url'].includes(lowerKey)) return;
+              // Skip keys we handle manually
+              if (['seo_keywords', 'available colors', 'general names', 'standard packing', 'standard', 'tds_url', 'mtc_url'].includes(lowerKey)) return;
               if (['head type', 'drive type', 'thread type'].includes(lowerKey)) return;
 
-              // Check if it's a Performance Key
               const isDefaultPerfKey = DEFAULT_PERFORMANCE_KEYS.some(pk => pk.toLowerCase() === lowerKey);
-              
-              // FIX: Case insensitive check for "Standard" to detect Custom Performance items
               const isCustomPerfKey = val.trim().toLowerCase() === "standard";
 
               if (isDefaultPerfKey || isCustomPerfKey) {
-                  // If it's a default key, normalize the casing. If custom, use the DB key.
                   const exactKey = DEFAULT_PERFORMANCE_KEYS.find(pk => pk.toLowerCase() === lowerKey) || key;
-                  
-                  // IMPORTANT: Add to Available list (Grid) AND Selected list (Checked)
                   dynamicAvailableKeys.add(exactKey);
                   loadedPerfKeys.push(exactKey);
               } else if (KNOWN_CORE_KEYS.some(k => k.toLowerCase() === lowerKey)) {
@@ -196,17 +204,17 @@ const AddProduct: React.FC = () => {
               }
           });
 
-          // State update with the newly discovered keys
           setAvailablePerfKeys(Array.from(dynamicAvailableKeys));
 
+          // Ensure basic core specs exist
           if (!loadedCoreSpecs.find(x => x.key === 'Head Type')) loadedCoreSpecs.unshift({ key: 'Head Type', value: '' });
           if (!loadedCoreSpecs.find(x => x.key === 'Drive Type')) loadedCoreSpecs.splice(1, 0, { key: 'Drive Type', value: '' });
           if (!loadedCoreSpecs.find(x => x.key === 'Thread Type')) loadedCoreSpecs.splice(2, 0, { key: 'Thread Type', value: '' });
 
           setDynamicCoreSpecs(loadedCoreSpecs);
-          setSelectedPerformance(loadedPerfKeys); // Auto-tick boxes
+          setSelectedPerformance(loadedPerfKeys);
 
-          // Handle Dimensional Specs
+          // Handle Dimensions
           let parsedDims: DimItem[] = [];
           if (Array.isArray(product.dimensional_specifications)) {
              parsedDims = product.dimensional_specifications.map((d: any) => ({
@@ -214,6 +222,14 @@ const AddProduct: React.FC = () => {
                  symbol: d.symbol || '',
                  values: typeof d.values === 'object' ? d.values : {} 
              }));
+          }
+
+          // Handle Certifications
+          let parsedCerts: CertItem[] = [];
+          if(Array.isArray(product.certifications) && product.certifications.length > 0) {
+             parsedCerts = product.certifications;
+          } else if (product.iso_certified === true) {
+             parsedCerts = [{ title: "ISO 9001:2015", subtitle: "Certified Facility" }];
           }
 
           setFormData({
@@ -229,10 +245,11 @@ const AddProduct: React.FC = () => {
             technical_drawing: product.technical_drawing || '',
             specifications: loadedOtherSpecs,
             dimensional_specifications: parsedDims,
-            applications: loadedApps 
+            applications: loadedApps,
+            certifications: parsedCerts
           });
 
-          // Variants Logic
+          // Variants
           const { data: variantData } = await supabase.from('product_variants').select('*').eq('product_id', id);
           if (variantData && variantData.length > 0) {
             const uniqueSizes = variantData.reduce((acc: any[], curr) => {
@@ -258,34 +275,18 @@ const AddProduct: React.FC = () => {
     }
   }, [id, isEditMode]);
 
-  // --- MATERIAL LOGIC ---
+  // --- SYNC MATERIAL ---
   useEffect(() => {
     const combinedMaterials = materialRows
       .filter(r => r.name.trim() !== '')
       .map(r => {
         const name = r.name.trim();
         const grade = r.grades.trim();
-        if (grade) {
-           return `${name} (Grade ${grade})`;
-        }
-        return name;
+        return grade ? `${name} (Grade ${grade})` : name;
       })
       .join(' | '); 
-      
     setFormData(prev => ({ ...prev, material: combinedMaterials }));
   }, [materialRows]);
-
-  const addMaterialRow = () => setMaterialRows([...materialRows, { name: '', grades: '' }]);
-  const removeMaterialRow = (idx: number) => setMaterialRows(materialRows.filter((_, i) => i !== idx));
-  const updateMaterialRow = (idx: number, field: 'name' | 'grades', val: string) => {
-      const newRows = [...materialRows];
-      newRows[idx][field] = val;
-      setMaterialRows(newRows);
-  };
-
-  const uniqueDiameters = Array.from(new Set<string>(
-    sizes.map(s => s.diameter.trim()).filter(d => d !== '')
-  )).sort((a: string, b: string) => parseFloat(a) - parseFloat(b));
 
   // --- HANDLERS ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -296,27 +297,19 @@ const AddProduct: React.FC = () => {
   const handleExpertChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setExpertData({ ...expertData, [e.target.name]: e.target.value });
   };
+  
+  const handleFittingChange = (e: any) => setFittingExtras(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // --- PERFORMANCE TOGGLE HANDLER ---
+  // Performance Logic
   const togglePerformanceSpec = (key: string) => {
     setSelectedPerformance(prev => {
-        if (prev.includes(key)) {
-            return prev.filter(k => k !== key);
-        } else {
-            return [...prev, key];
-        }
+        return prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
     });
   };
 
-  // --- ADD CUSTOM PERFORMANCE HANDLER ---
   const handleAddCustomPerf = () => {
     const trimmedName = newPerfName.trim();
-    if (!trimmedName) {
-        setIsAddingPerf(false);
-        setNewPerfName('');
-        return;
-    }
-    // Case-insensitive duplicate check
+    if (!trimmedName) { setIsAddingPerf(false); setNewPerfName(''); return; }
     if (!availablePerfKeys.some(k => k.toLowerCase() === trimmedName.toLowerCase())) {
         setAvailablePerfKeys(prev => [...prev, trimmedName]); 
         setSelectedPerformance(prev => [...prev, trimmedName]); 
@@ -325,7 +318,7 @@ const AddProduct: React.FC = () => {
     setIsAddingPerf(false);
   };
 
-  // Dynamic Core Specs
+  // Helper Functions
   const addCoreSpec = () => setDynamicCoreSpecs([...dynamicCoreSpecs, { key: '', value: '' }]);
   const removeCoreSpec = (idx: number) => setDynamicCoreSpecs(dynamicCoreSpecs.filter((_, i) => i !== idx));
   const updateCoreSpec = (idx: number, field: 'key' | 'value', val: string) => {
@@ -334,7 +327,6 @@ const AddProduct: React.FC = () => {
     setDynamicCoreSpecs(newSpecs);
   };
 
-  // Other Specs
   const addSpec = () => setFormData(p => ({ ...p, specifications: [...p.specifications, { key: '', value: '' }] }));
   const removeSpec = (idx: number) => setFormData(p => ({ ...p, specifications: p.specifications.filter((_, i) => i !== idx) }));
   const updateSpec = (idx: number, field: 'key'|'value', val: string) => {
@@ -343,7 +335,6 @@ const AddProduct: React.FC = () => {
     setFormData(p => ({ ...p, specifications: newSpecs }));
   };
 
-  // Dimensions
   const addDim = () => setFormData(p => ({ ...p, dimensional_specifications: [...p.dimensional_specifications, { label: '', symbol: '', values: {} }] }));
   const removeDim = (idx: number) => setFormData(p => ({ ...p, dimensional_specifications: p.dimensional_specifications.filter((_, i) => i !== idx) }));
   const updateDim = (idx: number, field: 'label' | 'symbol' | 'values', val: string, diameterKey?: string) => {
@@ -356,10 +347,25 @@ const AddProduct: React.FC = () => {
     setFormData(p => ({ ...p, dimensional_specifications: newDims }));
   };
 
-  // Apps, Uploads, Variants
-  const addApp = () => setFormData(p => ({ ...p, applications: [...p.applications, { name: '', image: '' }] }));
-  const updateAppName = (idx: number, val: string) => { const newApps = [...formData.applications]; newApps[idx].name = val; setFormData(p => ({ ...p, applications: newApps })); };
-  const removeApp = (idx: number) => setFormData(p => ({ ...p, applications: p.applications.filter((_, i) => i !== idx) }));
+  // Certifications
+  const addCert = () => setFormData(p => ({ ...p, certifications: [...p.certifications, { title: 'ISO 9001:2015', subtitle: 'Certified Facility' }] }));
+  const removeCert = (idx: number) => setFormData(p => ({ ...p, certifications: p.certifications.filter((_, i) => i !== idx) }));
+  const updateCert = (idx: number, field: 'title' | 'subtitle', val: string) => {
+      const newCerts = [...formData.certifications];
+      newCerts[idx][field] = val;
+      setFormData(p => ({ ...p, certifications: newCerts }));
+  };
+
+  // Material Helpers
+  const addMaterialRow = () => setMaterialRows([...materialRows, { name: '', grades: '' }]);
+  const removeMaterialRow = (idx: number) => setMaterialRows(materialRows.filter((_, i) => i !== idx));
+  const updateMaterialRow = (idx: number, field: 'name' | 'grades', val: string) => {
+      const newRows = [...materialRows];
+      newRows[idx][field] = val;
+      setMaterialRows(newRows);
+  };
+
+  // Files
   const uploadFile = async (file: File, folder: string) => {
     const fileName = `${folder}/${Date.now()}-${file.name.replace(/\s/g, '-')}`;
     const { error } = await supabase.storage.from('product-images').upload(fileName, file); 
@@ -367,27 +373,37 @@ const AddProduct: React.FC = () => {
     const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
     return data.publicUrl;
   };
+
   const handleAppImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
     if (!e.target.files?.[0]) return;
     const newApps = [...formData.applications]; newApps[idx].loading = true; setFormData(p => ({ ...p, applications: newApps }));
     try { const url = await uploadFile(e.target.files[0], 'applications'); newApps[idx].image = url; } catch(err) { alert('Upload failed'); }
     newApps[idx].loading = false; setFormData(p => ({ ...p, applications: newApps }));
   };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     setUploading(true);
     try { const url = await uploadFile(e.target.files[0], 'gallery'); setFormData(prev => ({ ...prev, images: [url, ...prev.images] })); } catch(err) { alert('Upload failed'); }
     setUploading(false);
   };
+
   const handleTechDrawingUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     setUploading(true);
     try { const url = await uploadFile(e.target.files[0], 'tech'); setFormData(prev => ({ ...prev, technical_drawing: url })); } catch(err) { alert('Upload failed'); }
     setUploading(false);
   };
+
+  // Apps, Sizes, Finishes Helpers
+  const addApp = () => setFormData(p => ({ ...p, applications: [...p.applications, { name: '', image: '' }] }));
+  const updateAppName = (idx: number, val: string) => { const newApps = [...formData.applications]; newApps[idx].name = val; setFormData(p => ({ ...p, applications: newApps })); };
+  const removeApp = (idx: number) => setFormData(p => ({ ...p, applications: p.applications.filter((_, i) => i !== idx) }));
+
   const addSizeRow = () => setSizes([...sizes, { diameter: '', length: '' }]);
   const removeSizeRow = (idx: number) => setSizes(sizes.filter((_, i) => i !== idx));
   const handleSizeChange = (idx: number, field: 'diameter'|'length', val: string) => { const n = [...sizes]; n[idx][field] = val; setSizes(n); };
+  
   const addFinishRow = () => setFinishes([...finishes, { name: '', image: '', loading: false }]);
   const removeFinishRow = (idx: number) => setFinishes(finishes.filter((_, i) => i !== idx));
   const handleFinishNameChange = (idx: number, val: string) => { const n = [...finishes]; n[idx].name = val; setFinishes(n); };
@@ -397,6 +413,10 @@ const AddProduct: React.FC = () => {
      try { const url = await uploadFile(e.target.files[0], 'finishes'); n[idx].image = url; } catch(err) { alert('Finish upload failed'); }
      n[idx].loading = false; setFinishes(n);
   };
+
+  const uniqueDiameters = Array.from(new Set<string>(
+    sizes.map(s => s.diameter.trim()).filter(d => d !== '')
+  )).sort((a: string, b: string) => parseFloat(a) - parseFloat(b));
 
   // --- SUBMIT FUNCTION ---
   const handleSubmit = async (e: React.FormEvent) => {
@@ -412,39 +432,33 @@ const AddProduct: React.FC = () => {
         return found ? found.value : '';
     };
 
-    const headTypeVal = findValue('Head Type');
-    const driveTypeVal = findValue('Drive Type');
-    const threadTypeVal = findValue('Thread Type');
-
-    const STANDARD_KEYS = ['head type', 'drive type', 'thread type'];
-    
-    // 1. Extra Core Specs
     const extraCoreSpecs = dynamicCoreSpecs.filter(s => 
-        !STANDARD_KEYS.includes(s.key.trim().toLowerCase()) && s.key.trim() !== ''
+        !['head type', 'drive type', 'thread type'].includes(s.key.trim().toLowerCase()) && s.key.trim() !== ''
     );
 
-    // 2. Format Performance Data
-    const formattedPerformanceSpecs = selectedPerformance.map(key => ({
-        key: key,
-        value: "Standard" 
-    }));
+    const formattedPerformanceSpecs = selectedPerformance.map(key => ({ key: key, value: "Standard" }));
 
-    // 3. Merge All Specs
+    // MERGE ALL SPECS (General + Performance + Core Extras + Fitting Extras)
     const mergedSpecs = [
-        ...formData.specifications.filter(s => s.key && s.value), // Other Specs
-        ...extraCoreSpecs, // Custom Core
-        ...formattedPerformanceSpecs, // Performance Data
+        ...formData.specifications.filter(s => s.key && s.value),
+        ...extraCoreSpecs,
+        ...formattedPerformanceSpecs,
+        { key: 'Available Colors', value: fittingExtras.colors },
+        { key: 'General Names', value: fittingExtras.general_names },
+        { key: 'Standard Packing', value: fittingExtras.packing },
         { key: 'seo_keywords', value: expertData.seo_keywords }
-    ].filter(s => s.value !== ''); 
+    ].filter(s => s.value && s.value.trim() !== ''); 
 
     const validDimensions = formData.dimensional_specifications.filter(d => d.label.trim() !== '');
+    const validCerts = formData.certifications.filter(c => c.title.trim() !== '');
 
     const payload = {
       ...formData,
       slug: finalSlug,
-      head_type: headTypeVal,   
-      drive_type: driveTypeVal,
-      thread_type: threadTypeVal,
+      certifications: validCerts,
+      head_type: findValue('Head Type'),   
+      drive_type: findValue('Drive Type'),
+      thread_type: findValue('Thread Type'),
       finish_images: finishImageMap,
       applications: formData.applications.filter(a => a.name.trim() !== '').map(({loading, ...rest}) => rest),
       specifications: mergedSpecs,
@@ -471,7 +485,7 @@ const AddProduct: React.FC = () => {
         if (validSizes.length > 0) {
            validSizes.forEach(size => {
               if (validFinishes.length > 0) {
-                 validFinishes.forEach(finish => { variantsToInsert.push({ product_id: productId, diameter: size.diameter, length: size.length, finish: finish.name }); });
+                  validFinishes.forEach(finish => { variantsToInsert.push({ product_id: productId, diameter: size.diameter, length: size.length, finish: finish.name }); });
               } else { variantsToInsert.push({ product_id: productId, diameter: size.diameter, length: size.length, finish: '' }); }
            });
         } else if (validFinishes.length > 0) {
@@ -502,15 +516,7 @@ const AddProduct: React.FC = () => {
         <datalist id="driveTypeOptions">{DRIVE_TYPES.map(o => <option key={o} value={o} />)}</datalist>
         <datalist id="threadTypeOptions">{THREAD_TYPES.map(o => <option key={o} value={o} />)}</datalist>
         <datalist id="materialOptions">{MATERIALS.map(o => <option key={o} value={o} />)}</datalist>
-        
-        {/* Core Attributes suggestions */}
-        <datalist id="coreAttributesSuggestions">
-            <option value="Head Type" />
-            <option value="Drive Type" />
-            <option value="Thread Type" />
-            <option value="Point Type" />
-            <option value="Coating" />
-        </datalist>
+        <datalist id="coreAttributesSuggestions"><option value="Head Type" /><option value="Drive Type" /><option value="Thread Type" /><option value="Point Type" /><option value="Coating" /></datalist>
 
         {/* 1. Basic Info & SEO */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -530,20 +536,41 @@ const AddProduct: React.FC = () => {
           <textarea name="long_description" value={formData.long_description} onChange={handleChange} placeholder="Long Description" className="w-full px-4 py-2 border rounded-lg" rows={4} />
         </div>
 
-        {/* 3. Core Specifications */}
+        {/* 2. CERTIFICATIONS & BADGES */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2"><ShieldCheck size={18} className="text-emerald-600" /> Certifications</h3>
+                <button type="button" onClick={addCert} className="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded hover:bg-emerald-200 flex items-center gap-1"><Plus size={14} /> Add Badge</button>
+            </div>
+            <div className="space-y-3">
+                {formData.certifications.length === 0 && <div className="text-center text-sm text-gray-400 py-2 italic bg-gray-50 rounded">No certifications added.</div>}
+                {formData.certifications.map((cert, idx) => (
+                    <div key={idx} className="flex gap-4 items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <div className="pt-2"><ShieldCheck className="text-gray-300" size={24} /></div>
+                        <div className="flex-1 space-y-2">
+                            <div><label className="block text-[10px] font-bold text-gray-400 uppercase">Title</label><input value={cert.title} onChange={(e) => updateCert(idx, 'title', e.target.value)} className="w-full px-3 py-1.5 border rounded text-sm font-bold text-gray-800" placeholder="Certification Name"/></div>
+                            <div><label className="block text-[10px] font-bold text-gray-400 uppercase">Subtitle</label><input value={cert.subtitle} onChange={(e) => updateCert(idx, 'subtitle', e.target.value)} className="w-full px-3 py-1.5 border rounded text-sm text-gray-600" placeholder="Description or Type"/></div>
+                        </div>
+                        <button type="button" onClick={() => removeCert(idx)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={18} /></button>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* 3. CORE SPECS + MATERIAL (Standard for All) */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-4 border-b pb-2">
                   <h3 className="font-bold text-gray-900 flex items-center gap-2"><Hammer size={18} /> Core Specs</h3>
-                  <button type="button" onClick={addCoreSpec} className="text-xs bg-black text-white px-3 py-1 rounded flex items-center gap-1 hover:bg-slate-800 transition-colors">
-                      <ListPlus size={14}/> Add Attribute
-                  </button>
+                  {!isFittingCategory && (
+                    <button type="button" onClick={addCoreSpec} className="text-xs bg-black text-white px-3 py-1 rounded flex items-center gap-1 hover:bg-slate-800 transition-colors"><ListPlus size={14}/> Add Attribute</button>
+                  )}
               </div>
               
-              {/* Material Builder */}
+              {/* Material Builder (Used for both Fasteners and Fittings) */}
               <div className="mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
                   <div className="flex justify-between items-center mb-2">
-                     <label className="block text-xs font-bold text-gray-700 uppercase">Material Composition</label>
-                     <button type="button" onClick={addMaterialRow} className="text-xs bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded flex items-center gap-1 hover:bg-gray-100"><Plus size={12}/> Add Grade</button>
+                      <label className="block text-xs font-bold text-gray-700 uppercase">Material Composition</label>
+                      <button type="button" onClick={addMaterialRow} className="text-xs bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded flex items-center gap-1 hover:bg-gray-100"><Plus size={12}/> Add Grade</button>
                   </div>
                   <div className="space-y-2">
                       {materialRows.map((row, idx) => (
@@ -554,151 +581,89 @@ const AddProduct: React.FC = () => {
                           </div>
                       ))}
                   </div>
-                  <div className="mt-2 text-[10px] text-gray-400">Preview: <span className="font-mono text-gray-600">{formData.material || '(No material added)'}</span></div>
               </div>
 
-              {/* Dynamic Attributes */}
-              <div className="space-y-3">
-                  {dynamicCoreSpecs.map((spec, idx) => (
-                      <div key={idx} className="flex gap-4">
-                          <input 
-                              list="coreAttributesSuggestions"
-                              value={spec.key} 
-                              onChange={(e) => updateCoreSpec(idx, 'key', e.target.value)} 
-                              placeholder="Attribute Name" 
-                              className="flex-1 px-3 py-2 border rounded-lg" 
-                          />
-                          <input 
-                              list={spec.key === 'Head Type' ? "headTypeOptions" : spec.key === 'Drive Type' ? "driveTypeOptions" : spec.key === 'Thread Type' ? "threadTypeOptions" : ""}
-                              value={spec.value} 
-                              onChange={(e) => updateCoreSpec(idx, 'value', e.target.value)} 
-                              placeholder="Value" 
-                              className="flex-1 px-3 py-2 border rounded-lg" 
-                          />
-                          <button type="button" onClick={() => removeCoreSpec(idx)} className="text-red-400 hover:text-red-600">
-                              <Trash2 size={18}/>
-                          </button>
+              {/* DYNAMIC LAYOUT SWITCH */}
+              {isFittingCategory ? (
+                 // --- FITTING LAYOUT: Architectural DNA ---
+                 <div className="border border-orange-200 bg-orange-50/50 p-4 rounded-xl">
+                    <h3 className="font-bold mb-4 flex gap-2 text-orange-800"><LayoutGrid size={18} className="text-orange-600"/> Architectural DNA</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white p-3 rounded border border-orange-100">
+                             <label className="text-xs font-bold uppercase block mb-1 flex items-center gap-2 text-gray-600"><Palette size={14}/> Available Colors/Finishes</label>
+                             <input name="colors" value={fittingExtras.colors} onChange={handleFittingChange} placeholder="Gold, Silver, Black Antique..." className="w-full border p-2 rounded text-sm"/>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-orange-100">
+                             <label className="text-xs font-bold uppercase block mb-1 flex items-center gap-2 text-gray-600"><Box size={14}/> Standard Packing</label>
+                             <input name="packing" value={fittingExtras.packing} onChange={handleFittingChange} placeholder="100 pcs/box..." className="w-full border p-2 rounded text-sm"/>
+                        </div>
+                        <div className="col-span-1 md:col-span-2 bg-white p-3 rounded border border-orange-100">
+                             <label className="text-xs font-bold uppercase block mb-1 flex items-center gap-2 text-gray-600"><Tag size={14}/> General Names / Tags</label>
+                             <input name="general_names" value={fittingExtras.general_names} onChange={handleFittingChange} placeholder="Door Hinge, Cabinet Handle..." className="w-full border p-2 rounded text-sm"/>
+                        </div>
+                    </div>
+                 </div>
+              ) : (
+                 // --- FASTENER LAYOUT: Head/Drive/Thread ---
+                 <div className="space-y-3">
+                    {dynamicCoreSpecs.map((spec, idx) => (
+                        <div key={idx} className="flex gap-4">
+                            <input list="coreAttributesSuggestions" value={spec.key} onChange={(e) => updateCoreSpec(idx, 'key', e.target.value)} placeholder="Attribute Name" className="flex-1 px-3 py-2 border rounded-lg" />
+                            <input list={spec.key === 'Head Type' ? "headTypeOptions" : spec.key === 'Drive Type' ? "driveTypeOptions" : spec.key === 'Thread Type' ? "threadTypeOptions" : ""} value={spec.value} onChange={(e) => updateCoreSpec(idx, 'value', e.target.value)} placeholder="Value" className="flex-1 px-3 py-2 border rounded-lg" />
+                            <button type="button" onClick={() => removeCoreSpec(idx)} className="text-red-400 hover:text-red-600"><Trash2 size={18}/></button>
+                        </div>
+                    ))}
+                 </div>
+              )}
+        </div>
+
+        {/* 4. PERFORMANCE DATA (Only for Fasteners) */}
+        {!isFittingCategory && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <div className="flex justify-between items-center mb-4 border-b pb-2 flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2"><Activity size={18} className="text-amber-500" /> Performance Specifications</h3>
                       </div>
-                  ))}
-              </div>
-        </div>
-
-        {/* 4. PERFORMANCE DATA (NOW DYNAMIC WITH ADD BUTTON) */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-             <div className="flex justify-between items-center mb-4 border-b pb-2 flex-wrap gap-2">
-                 <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                       <Activity size={18} className="text-amber-500" /> Performance Specifications
-                    </h3>
-                 </div>
-
-                 {/* ADD NEW BUTTON & INPUT AREA */}
-                 <div className="flex items-center gap-2">
-                    {isAddingPerf ? (
-                        <div className="flex items-center gap-1 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <input 
-                                autoFocus
-                                type="text" 
-                                value={newPerfName}
-                                onChange={(e) => setNewPerfName(e.target.value)}
-                                placeholder="Feature Name..."
-                                className="text-sm px-2 py-1 border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 w-40"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault(); 
-                                        handleAddCustomPerf();
-                                    }
-                                }}
-                            />
-                            <button type="button" onClick={handleAddCustomPerf} className="bg-green-600 text-white p-1.5 rounded hover:bg-green-700">
-                                <Check size={14} />
-                            </button>
-                            <button type="button" onClick={() => setIsAddingPerf(false)} className="bg-gray-200 text-gray-600 p-1.5 rounded hover:bg-gray-300">
-                                <X size={14} />
-                            </button>
-                        </div>
-                    ) : (
-                        <button 
-                            type="button" 
-                            onClick={() => setIsAddingPerf(true)} 
-                            className="text-xs bg-amber-50 text-amber-700 border border-amber-200 font-bold px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-amber-100 transition-colors"
-                        >
-                            <Plus size={14} /> Add Custom
-                        </button>
-                    )}
-                 </div>
-             </div>
-             
-             <div className="mb-3 text-[11px] text-gray-400 italic">
-                Select features to enable in "Performance Data" vault. Custom added features will save as "Standard".
-             </div>
-             
-             {/* LIST RENDEING (Using availablePerfKeys state) */}
-             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {availablePerfKeys.map((key) => {
-                    const isSelected = selectedPerformance.includes(key);
-                    return (
-                        <div 
-                            key={key}
-                            onClick={() => togglePerformanceSpec(key)}
-                            className={`cursor-pointer rounded-lg p-3 border text-sm font-medium flex items-center gap-3 transition-all ${isSelected ? 'bg-amber-50 border-amber-500 text-amber-900 shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}
-                        >
-                            <div className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500' : 'bg-white border-gray-300'}`}>
-                                {isSelected && <Check size={14} className="text-white" strokeWidth={3} />}
+                      <div className="flex items-center gap-2">
+                        {isAddingPerf ? (
+                            <div className="flex items-center gap-1 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <input autoFocus type="text" value={newPerfName} onChange={(e) => setNewPerfName(e.target.value)} placeholder="Feature Name..." className="text-sm px-2 py-1 border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 w-40" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomPerf(); }}} />
+                                <button type="button" onClick={handleAddCustomPerf} className="bg-green-600 text-white p-1.5 rounded hover:bg-green-700"><Check size={14} /></button>
+                                <button type="button" onClick={() => setIsAddingPerf(false)} className="bg-gray-200 text-gray-600 p-1.5 rounded hover:bg-gray-300"><X size={14} /></button>
                             </div>
-                            <span className="break-words leading-tight">{key}</span>
-                        </div>
-                    );
-                })}
-             </div>
-        </div>
+                        ) : (
+                            <button type="button" onClick={() => setIsAddingPerf(true)} className="text-xs bg-amber-50 text-amber-700 border border-amber-200 font-bold px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-amber-100 transition-colors"><Plus size={14} /> Add Custom</button>
+                        )}
+                      </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {availablePerfKeys.map((key) => {
+                        const isSelected = selectedPerformance.includes(key);
+                        return (
+                            <div key={key} onClick={() => togglePerformanceSpec(key)} className={`cursor-pointer rounded-lg p-3 border text-sm font-medium flex items-center gap-3 transition-all ${isSelected ? 'bg-amber-50 border-amber-500 text-amber-900 shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}>
+                                <div className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border transition-colors ${isSelected ? 'bg-amber-500 border-amber-500' : 'bg-white border-gray-300'}`}>{isSelected && <Check size={14} className="text-white" strokeWidth={3} />}</div>
+                                <span className="break-words leading-tight">{key}</span>
+                            </div>
+                        );
+                    })}
+                  </div>
+            </div>
+        )}
 
-        {/* 5. Blueprint Data */}
+        {/* 5. Blueprint Data (Tech Drawing & Dimensions Table) */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <div className="flex justify-between items-center mb-4 border-b pb-2">
-                  <h3 className="font-bold text-gray-900 flex items-center gap-2"><Ruler size={18} /> Blueprint Data</h3>
-                  <button type="button" onClick={addDim} className="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded hover:bg-amber-200">+ Add Feature</button>
-              </div>
-              
+              <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="font-bold text-gray-900 flex items-center gap-2"><Ruler size={18} /> Blueprint Data</h3><button type="button" onClick={addDim} className="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded hover:bg-amber-200">+ Add Feature</button></div>
               <div className="mb-8 p-4 bg-slate-50 rounded-lg border border-dashed border-slate-300 flex items-center gap-6">
-                 <div className="w-32 h-20 bg-white border flex items-center justify-center overflow-hidden rounded">
-                     {formData.technical_drawing ? <img src={formData.technical_drawing} className="w-full h-full object-contain mix-blend-multiply" /> : <ImageIcon className="text-gray-300" />}
-                 </div>
-                 <div>
-                     <label className="block text-sm font-bold mb-1">Drawing Image</label>
-                     <input type="file" onChange={handleTechDrawingUpload} className="text-sm" />
-                 </div>
+                  <div className="w-32 h-20 bg-white border flex items-center justify-center overflow-hidden rounded">{formData.technical_drawing ? <img src={formData.technical_drawing} className="w-full h-full object-contain mix-blend-multiply" /> : <ImageIcon className="text-gray-300" />}</div>
+                  <div><label className="block text-sm font-bold mb-1">Drawing Image</label><input type="file" onChange={handleTechDrawingUpload} className="text-sm" /></div>
               </div>
-
               <div className="overflow-x-auto pb-4">
                   {uniqueDiameters.length === 0 ? (
-                      <div className="text-center p-4 text-red-500 bg-red-50 rounded text-sm border border-red-100">
-                          ⚠️ Please add "Sizes" in the "Dimensions (Variants)" section below to generate columns for this table.
-                      </div>
+                      <div className="text-center p-4 text-red-500 bg-red-50 rounded text-sm border border-red-100">⚠️ Please add "Sizes" in the "Dimensions (Variants)" section below to generate columns for this table.</div>
                   ) : (
                       <table className="w-full min-w-[600px] border-collapse text-sm">
-                        <thead>
-                            <tr className="bg-gray-100 text-xs uppercase text-gray-500 font-bold text-left">
-                                <th className="p-3 border-b min-w-[150px]">Feature Name</th>
-                                <th className="p-3 border-b w-[80px]">Symbol</th>
-                                {uniqueDiameters.map(dia => (
-                                    <th key={dia} className="p-3 border-b min-w-[120px] text-blue-600">Dia ({dia})</th>
-                                ))}
-                                <th className="p-3 border-b w-[40px]"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {formData.dimensional_specifications.map((dim, idx) => (
-                                <tr key={idx} className="border-b hover:bg-gray-50 transition-colors">
-                                    <td className="p-2"><input value={dim.label} onChange={(e) => updateDim(idx, 'label', e.target.value)} placeholder="Feature Name" className="w-full px-2 py-1 border rounded bg-transparent focus:bg-white" /></td>
-                                    <td className="p-2"><input value={dim.symbol} onChange={(e) => updateDim(idx, 'symbol', e.target.value)} placeholder="dk" className="w-full px-2 py-1 border rounded bg-transparent focus:bg-white font-mono text-center" /></td>
-                                    {uniqueDiameters.map(dia => (
-                                        <td key={dia} className="p-2"><input value={dim.values[dia] || ''} onChange={(e) => updateDim(idx, 'values', e.target.value, dia)} placeholder={`Val`} className="w-full px-2 py-1 border rounded bg-blue-50/30 focus:bg-white text-center" /></td>
-                                    ))}
-                                    <td className="p-2 text-center"><button type="button" onClick={() => removeDim(idx)} className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={16}/></button></td>
-                                </tr>
-                            ))}
-                        </tbody>
+                        <thead><tr className="bg-gray-100 text-xs uppercase text-gray-500 font-bold text-left"><th className="p-3 border-b min-w-[150px]">Feature Name</th><th className="p-3 border-b w-[80px]">Symbol</th>{uniqueDiameters.map(dia => (<th key={dia} className="p-3 border-b min-w-[120px] text-blue-600">Dia ({dia})</th>))}<th className="p-3 border-b w-[40px]"></th></tr></thead>
+                        <tbody>{formData.dimensional_specifications.map((dim, idx) => (<tr key={idx} className="border-b hover:bg-gray-50 transition-colors"><td className="p-2"><input value={dim.label} onChange={(e) => updateDim(idx, 'label', e.target.value)} placeholder="Feature Name" className="w-full px-2 py-1 border rounded bg-transparent focus:bg-white" /></td><td className="p-2"><input value={dim.symbol} onChange={(e) => updateDim(idx, 'symbol', e.target.value)} placeholder="dk" className="w-full px-2 py-1 border rounded bg-transparent focus:bg-white font-mono text-center" /></td>{uniqueDiameters.map(dia => (<td key={dia} className="p-2"><input value={dim.values[dia] || ''} onChange={(e) => updateDim(idx, 'values', e.target.value, dia)} placeholder={`Val`} className="w-full px-2 py-1 border rounded bg-blue-50/30 focus:bg-white text-center" /></td>))}<td className="p-2 text-center"><button type="button" onClick={() => removeDim(idx)} className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={16}/></button></td></tr>))}</tbody>
                       </table>
                   )}
               </div>
@@ -718,7 +683,7 @@ const AddProduct: React.FC = () => {
               </div>
         </div>
 
-        {/* 7. Applications & Icons */}
+        {/* 7. Applications */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
            <div className="flex justify-between items-center mb-4 border-b pb-2"><h3 className="font-bold text-gray-900 flex items-center gap-2"><LayoutGrid size={18} /> Applications</h3><button type="button" onClick={addApp} className="text-xs bg-green-100 text-green-800 font-bold px-3 py-1 rounded">+ Add</button></div>
            <div className="bg-yellow-50 text-yellow-800 p-3 rounded text-xs mb-4 flex gap-2"><Info size={16} /><p>Use keywords like "Wood", "Gypsum", "Electrical" in App Name to auto-trigger icons.</p></div>

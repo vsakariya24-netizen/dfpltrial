@@ -1,103 +1,106 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
+// --- 1. UTILITY ---
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// --- 2. SVG ICONS (The Screws) ---
+const CustomSharpScrew1 = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M5 5L19 5L14 10H10L5 5Z" />
+    <path d="M10.5 10H13.5L12 24L10.5 10Z" />
+    <path d="M10 12L14 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M14 14L10 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M10 18L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M14 20L11 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+const CustomDrywallScrew = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M6 4H18V6C18 6 16 8 16 9H8C8 8 6 6 6 6V4Z" />
+    <path d="M11 9L13 9L12 23L11 9Z" /> 
+    <path d="M10 11L14 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M10 14L14 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M10 17L14 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M11 20L13 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const CustomSharpScrew = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M5 5L19 5L14 10H10L5 5Z" />
+    <path d="M10.5 10H13.5L12 24L10.5 10Z" />
+    <path d="M10 12L14 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M14 14L10 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M10 18L14 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M14 20L11 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+// --- 3. MAIN LOADER COMPONENT ---
 const IntroLoader = ({ onComplete }: { onComplete: () => void }) => {
-  const [progress, setProgress] = useState(0);
+  const [exit, setExit] = useState(false);
 
   useEffect(() => {
-    // Simulate loading progress
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(timer);
-          return 100;
-        }
-        // Randomize speed for a "processing" feel
-        return prev + Math.floor(Math.random() * 10) + 1; 
-      });
-    }, 150);
+    // 1. Show the logo immediately.
+    // 2. Wait 2.5 seconds so the user can see the logo.
+    const timer = setTimeout(() => {
+      setExit(true); // Trigger the fade out animation
+      setTimeout(onComplete, 1000); // Tell parent component loading is done
+    }, 2500);
 
-    return () => clearInterval(timer);
-  }, []);
-
-  // Trigger completion callback when progress hits 100 + small delay
-  useEffect(() => {
-    if (progress === 100) {
-      setTimeout(() => {
-        onComplete();
-      }, 1000); // Wait 1 second after hitting 100% before lifting curtain
-    }
-  }, [progress, onComplete]);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050505] text-white overflow-hidden"
-      initial={{ y: 0 }}
-      exit={{ y: "-100%", transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#050505] overflow-hidden"
+      // Handle the exit fade-out
+      animate={exit ? { opacity: 0 } : { opacity: 1 }}
+      transition={{ duration: 1 }}
     >
-      {/* --- BACKGROUND GRID EFFECT --- */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-800/20 via-black to-black opacity-50" />
 
-      {/* --- LOGO CONTAINER --- */}
-      <div className="relative z-10 flex flex-col items-center">
-        <div className="relative mb-8">
-          {/* Glowing Aura behind logo */}
-          <motion.div 
-            className="absolute inset-0 bg-yellow-500 blur-[60px] opacity-20 rounded-full"
-            animate={{ 
-              scale: [0.8, 1.2, 0.8],
-              opacity: [0.1, 0.3, 0.1] 
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-          
-          {/* THE UPLOADED LOGO */}
-          <motion.img 
-            src="/your-logo-path.png" // <--- PUT YOUR UPLOADED LOGO PATH HERE
-            alt="Durable Fasteners Logo"
-            className="w-32 h-32 md:w-48 md:h-48 object-contain relative z-10"
-            initial={{ opacity: 0, scale: 0.8, filter: "grayscale(100%)" }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1, 
-              filter: progress > 50 ? "grayscale(0%)" : "grayscale(100%)" 
-            }}
-            transition={{ duration: 0.8 }}
-          />
-        </div>
-
-        {/* --- LOADING TEXT & BAR --- */}
-        <div className="w-64 md:w-80">
-          <div className="flex justify-between items-end mb-2">
-            <span className="text-xs font-mono text-white/50 tracking-widest uppercase">
-              System Calibration
-            </span>
-            <span className="text-4xl font-black italic text-white">
-              {Math.min(progress, 100)}%
-            </span>
-          </div>
-
-          {/* Progress Bar Container */}
-          <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-            <motion.div 
-              className="h-full bg-yellow-500"
-              initial={{ width: "0%" }}
-              animate={{ width: `${Math.min(progress, 100)}%` }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* --- BOTTOM TAGLINE --- */}
+      {/* Main Logo Animation Container */}
       <motion.div 
-        className="absolute bottom-10 text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        className="relative z-40 flex flex-col items-center"
+        initial={{ scale: 0.5, opacity: 0, filter: "blur(10px)" }}
+        animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
+        transition={{ type: "spring", stiffness: 100, damping: 15 }}
       >
-        <p className="text-[10px] tracking-[0.5em] uppercase text-white/30 font-bold">
-          Durable Fasteners Pvt Ltd
-        </p>
+        {/* Glowing Background behind logo */}
+        <motion.div 
+            className="absolute inset-0 bg-yellow-500 blur-[100px] opacity-20 rounded-full"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
+            transition={{ repeat: Infinity, duration: 3 }}
+        />
+        
+        {/* The Logo Image */}
+        <img 
+            src="/durablefastener.png" 
+            alt="Durable Logo" 
+            className="w-48 h-48 md:w-80 md:h-80 object-contain relative z-50 drop-shadow-2xl" 
+        />
+        
+        {/* Text Animation */}
+        <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="mt-8 text-center"
+        >
+            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase">
+                Durable <span className="text-yellow-500">Fasteners</span>
+            </h1>
+            <p className="text-xs md:text-sm text-white/50 tracking-[0.5em] mt-2 uppercase font-mono">
+                Engineered for Perfection
+            </p>
+        </motion.div>
       </motion.div>
     </motion.div>
   );

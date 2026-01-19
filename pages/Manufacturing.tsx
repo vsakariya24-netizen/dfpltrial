@@ -53,12 +53,18 @@ const Manufacturing: React.FC = () => {
     <div className="bg-[#0f172a] min-h-screen pt-20 font-sans text-slate-200 overflow-x-hidden selection:bg-blue-500 selection:text-white">
       <Helmet>
         {/* 1. Industrial & Factory Specific Title */}
-        <title>fastener manufacturing factory|Durable Fastener</title>
+        <title>Fastener Manufacturing Factory in R
+         ajkot | Durable Fastener</title>
         
         <meta 
           name="description" 
           content="Inside Durable Fastener's Rajkot factory: Explore our Cold Forging, Thread Rolling, and Heat Treatment lines. 400T+ monthly capacity with ISO 9001:2015 QC lab." 
         />
+        <meta name="geo.region" content="IN-GJ" />
+<meta name="geo.placename" content="Rajkot, Gujarat, India" />
+<meta name="ICBM" content="22.2587,70.7993" />
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
         
         <meta 
           name="keywords" 
@@ -69,44 +75,79 @@ const Manufacturing: React.FC = () => {
         <script type="application/ld+json">
           {`
             {
-              "@context": "https://schema.org",
-              "@type": "HowTo",
-              "name": "How Industrial Fasteners are Manufactured",
-              "description": "Step-by-step industrial process of manufacturing high-tensile screws and bolts at Durable Fastener Pvt Ltd.",
-              "totalTime": "P2D",
-              "supply": [
-                { "@type": "HowToSupply", "name": "Steel Wire Rod (10B21, SAE 1010)" }
-              ],
-              "tool": [
-                { "@type": "HowToTool", "name": "Cold Heading Machine" },
-                { "@type": "HowToTool", "name": "Thread Rolling Machine" },
-                { "@type": "HowToTool", "name": "Mesh Belt Furnace" }
-              ],
-              "step": [
-                {
-                  "@type": "HowToStep",
-                  "name": "Cold Heading",
-                  "text": "The raw wire is cut and formed into the screw shape using 5-station bolt formers."
-                },
-                {
-                  "@type": "HowToStep",
-                  "name": "Thread Rolling",
-                  "text": "Threads are formed onto the screw blank using high-pressure dies."
-                },
-                {
-                  "@type": "HowToStep",
-                  "name": "Heat Treatment",
-                  "text": "Screws are hardened in a continuous mesh belt furnace to achieve Grade 8.8 or 10.9."
-                },
-                {
-                  "@type": "HowToStep",
-                  "name": "Surface Finishing",
-                  "text": "Zinc or Phosphate coating is applied for corrosion resistance."
-                }
-              ]
-            }
+         "@context": "https://schema.org",
+         "@type": "FAQPage",
+          "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the production capacity of Durable Fastener Factory?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Our Rajkot facility produces over 400T+ fasteners monthly with full QC lab support."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Durable Fastener supply across India?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, we supply industrial fasteners throughout India with OEM partnerships."
+      }
+    }
+  ]
+}
           `}
         </script>
+        <script type="application/ld+json">
+{`
+{
+  "@context": "https://schema.org",
+  "@type": "ManufacturingBusiness",
+  "name": "Durable Fastener Pvt Ltd",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Rajkot",
+    "addressRegion": "Gujarat",
+    "addressCountry": "IN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 22.2587,
+    "longitude": 70.7993
+  },
+  "url": "https://durablefastener.com",
+  "logo": "https://durablefastener.com/logo.png",
+  "sameAs": [
+    "https://www.linkedin.com/company/durable-fastener",
+    "https://www.facebook.com/durablefastener"
+  ]
+},
+"@type": "LocalBusiness",
+"name": "Durable Fastener Pvt Ltd",
+"image": "https://durablefastener.com/logo.png",
+"address": {
+  "@type": "PostalAddress",
+  "streetAddress": "Your Street Address",
+  "addressLocality": "Rajkot",
+  "addressRegion": "Gujarat",
+  "postalCode": "360001",
+  "addressCountry": "IN"
+},
+"geo": {
+  "@type": "GeoCoordinates",
+  "latitude": 22.2587,
+  "longitude": 70.7993
+},
+"url": "https://durablefastener.com",
+"telephone": "+91-1234567890",
+"openingHours": "Mo-Fr 08:00-18:00",
+"sameAs": [
+   "https://www.linkedin.com/company/durable-fastener",
+   "https://www.facebook.com/durablefastener"
+]
+
+`}
+</script>
 
         {/* 3. ITEM LIST SCHEMA (Machinery List ke liye) */}
         <script type="application/ld+json">
@@ -280,52 +321,7 @@ const Manufacturing: React.FC = () => {
       </section>
 
       {/* ================= 5. MACHINERY & EQUIPMENT ================= */}
-      <section className="py-24 px-6 bg-[#0f172a] border-t border-white/5">
-         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-               <RevealOnScroll>
-                   <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Advanced Machinery Fleet</h2>
-                   <p className="text-xl text-slate-300 mb-10 leading-relaxed font-light">
-                      We don't outsource. Our shop floor is powered by high-speed Taiwanese and German technology designed for <span className="text-white font-semibold">24/7 production.</span>
-                   </p>
-               </RevealOnScroll>
-               
-               <div className="space-y-4">
-                  {[
-                     { name: "Multi-Station Cold Headers", count: "08 Units", note: "5-Station Bolt Formers" },
-                     { name: "High-Speed Thread Rollers", count: "18 Units", note: "With Auto-Feeders" },
-                     { name: "Optical Sorting Machines", count: "03 Units", note: "Zero Defect Guarantee" },
-                     { name: "Mesh Belt Furnace", count: "02 Lines", note: "Continuous Heat Treatment" },
-                  ].map((machine, i) => (
-                     <RevealOnScroll key={i} delay={i * 100}>
-                         <div className="flex justify-between items-center p-6 bg-slate-800/50 rounded-2xl border border-white/5 hover:border-blue-500/40 hover:bg-slate-800 transition-all group">
-                            <div className="flex items-center gap-5">
-                               <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400 group-hover:text-blue-300"><Settings size={24}/></div>
-                               <div>
-                                  <h4 className="text-white font-bold text-lg">{machine.name}</h4>
-                                  <p className="text-sm text-slate-400 font-medium mt-1">{machine.note}</p>
-                               </div>
-                            </div>
-                            <span className="text-2xl font-black text-white">{machine.count}</span>
-                         </div>
-                     </RevealOnScroll>
-                  ))}
-               </div>
-            </div>
-            
-            <RevealOnScroll delay={300}>
-                <div className="h-full min-h-[500px] bg-slate-800 rounded-3xl relative overflow-hidden group border border-white/10 shadow-2xl">
-                   <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent opacity-80 z-10"></div>
-                   <img src="https://images.unsplash.com/photo-1621905252507-b35492cc74b4?q=80&w=2070&auto=format&fit=crop" alt="Industrial Machinery" className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"/>
-                   <div className="absolute bottom-8 left-8 z-20">
-                      <span className="bg-green-500/20 border border-green-500/30 text-green-400 px-5 py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider flex items-center gap-3 backdrop-blur-md">
-                         <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div> Operational Status: Active
-                      </span>
-                   </div>
-                </div>
-            </RevealOnScroll>
-         </div>
-      </section>
+    
 
       {/* ================= 6. RAW MATERIAL ================= */}
       <section className="py-24 px-6 bg-[#0b1120]">
@@ -336,7 +332,7 @@ const Manufacturing: React.FC = () => {
                       <div className="inline-block bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold mb-6 tracking-wider">STEP 01: SOURCING</div>
                       <h2 className="text-4xl font-black text-white mb-6">Raw Material Integrity</h2>
                       <p className="text-xl text-slate-300 mb-8 leading-relaxed">
-                         Quality starts with the wire. We source exclusively from premium mills like <span className="text-white font-bold border-b-2 border-blue-500">TATA Steel, JSW, and RINL</span>.
+                         Quality starts with the wire. We source exclusively from premium mills like <span className="text-white font-bold border-b-2 border-blue-500">JSW, TATA Steel</span>.
                       </p>
                       <ul className="space-y-4">
                          {[
@@ -351,7 +347,7 @@ const Manufacturing: React.FC = () => {
                       </ul>
                    </div>
                    <div className="relative h-80 md:h-auto min-h-[400px]">
-                       <img src="https://images.unsplash.com/photo-1535063404286-f3655131a48c?q=80&w=2069&auto=format&fit=crop" alt="Steel Wire Coils" className="absolute inset-0 w-full h-full object-cover opacity-80 grayscale group-hover:grayscale-0 transition-all duration-700"/>
+                       <img src="https://images.unsplash.com/photo-1535063404286-f3655131a48c?q=80&w=2069&auto=format&fit=crop" alt="Cold Heading Machine at Durable Fastener Factory Rajkot" className="absolute inset-0 w-full h-full object-cover opacity-80 grayscale group-hover:grayscale-0 transition-all duration-700"/>
                        <div className="absolute inset-0 bg-blue-900/20 mix-blend-multiply"></div>
                    </div>
                 </div>
@@ -374,11 +370,11 @@ const Manufacturing: React.FC = () => {
                        </div>
                        <h3 className="text-3xl font-bold text-white mb-4">Heat Treatment Facility</h3>
                        <p className="text-lg text-slate-300 mb-8 leading-relaxed">
-                          In-house heat treatment ensures uniform hardness and mechanical properties across every batch.
+                        Heat treatment ensures uniform hardness and mechanical properties across every batch.
                        </p>
                        <ul className="space-y-3 text-slate-300 font-medium">
                           <li className="flex gap-3"><span className="text-orange-500">✔</span> Continuous Mesh Belt Furnaces</li>
-                          <li className="flex gap-3"><span className="text-orange-500">✔</span> Hardness Range: 8.8, 10.9, 12.9 Grade</li>
+                          <li className="flex gap-3"><span className="text-orange-500">✔</span> Matrial Range: 8.8, 10.9, 12.9 Grade</li>
                        </ul>
                    </div>
                 </div>
@@ -398,7 +394,7 @@ const Manufacturing: React.FC = () => {
                           Advanced plating lines delivering aesthetic finish and high corrosion resistance.
                        </p>
                        <ul className="space-y-3 text-slate-300 font-medium">
-                          <li className="flex gap-3"><span className="text-cyan-500">✔</span> Trivalent Zinc Plating (RoHS)</li>
+                          <li className="flex gap-3"><span className="text-cyan-500">✔</span> Trivalent Zinc Plating</li>
                           <li className="flex gap-3"><span className="text-cyan-500">✔</span> Black Phosphate & Oil</li>
                        </ul>
                    </div>
@@ -442,7 +438,7 @@ const Manufacturing: React.FC = () => {
                </RevealOnScroll>
                <div className="grid grid-cols-2 gap-6">
                   {[
-                      { l: "Monthly Output", v: "400T+" },
+                      { l: "Monthly Output", v: "50T+" },
                       { l: "Shift System", v: "24/7 Ops" },
                       { l: "Expansion", v: "Ready Infra" },
                       { l: "Lead Time", v: "Quick Turnaround" }
@@ -466,9 +462,7 @@ const Manufacturing: React.FC = () => {
             {/* Compliance Badges */}
             <RevealOnScroll>
                 <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-16 opacity-80">
-                   {["ISO 9001:2015", "Made in India", "RoHS Compliant", "IATF Ready"].map((badge, i) => (
-                       <span key={i} className="bg-white/5 px-6 py-3 rounded-full text-white font-bold border border-white/10 text-sm tracking-wide">{badge}</span>
-                   ))}
+                   
                 </div>
                 <h2 className="text-4xl md:text-6xl font-black text-white mb-12">Why Durable Fasteners?</h2>
             </RevealOnScroll>

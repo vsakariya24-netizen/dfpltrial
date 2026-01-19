@@ -13,7 +13,8 @@ import TermsAndConditions from './components/TermsAndConditions';
 // Public Pages
 import Home from './pages/Home';
 import Products from './pages/Products';
-import ProductDetail from './pages/ProductDetail';
+import ProductDetailWrapper from './pages/ProductDetailWrapper';
+
 import Contact from './pages/Contact';
 import AIFinder from './pages/AIFinder';
 import About from './pages/About';
@@ -36,7 +37,7 @@ import JobsList from './pages/Admin/JobsList';
 import AddBlog from './pages/Admin/AddBlog';
 import BlogList from './pages/Admin/BlogList';
 import ManageCategories from './pages/Admin/ManageCategories';
-import LifeAtDurable from './pages/LifeAtDurable';
+
 import AdminSiteContent from './pages/Admin/AdminSiteContent';
 import AddJob from './pages/Admin/AddJob'; 
 
@@ -88,7 +89,21 @@ const App: React.FC = () => {
   path="/products/:category/:subcategory" 
   element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Products /></main><Footer /></div></>} 
 />
-              <Route path="/product/:slug" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><ProductDetail /></main><Footer /></div></>} />
+              <Route 
+  path="/product/:slug" 
+  element={
+    <>
+      <Navbar />
+      <div className="flex flex-col min-h-screen">
+        {/* We remove pt-16 because the Wrapper pages handle their own padding */}
+        <main className="flex-grow pt-0">
+           <ProductDetailWrapper />
+        </main>
+        <Footer />
+      </div>
+    </>
+  } 
+/>
               <Route path="/manufacturing" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Manufacturing /></main><Footer /></div></>} />
               <Route path="/industrial" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Industrial /></main><Footer /></div></>} />
               <Route path="/contact" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Contact /></main><Footer /></div></>} />
@@ -97,7 +112,7 @@ const App: React.FC = () => {
               <Route path="/careers" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Careers /></main><Footer /></div></>} />
               <Route path="/blog" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><Blog /></main><Footer /></div></>} />
               <Route path="/blog/:id" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><BlogDetail /></main><Footer /></div></>} />
-              <Route path="/life-at-durable" element={<><Navbar /><div className="flex flex-col min-h-screen"><main className="flex-grow pt-16"><LifeAtDurable /></main><Footer /></div></>} />
+             
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
              <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
               {/* --- Admin Login --- */}
